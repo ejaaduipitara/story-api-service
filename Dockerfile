@@ -1,4 +1,4 @@
-FROM continuumio/anaconda3
+FROM continuumio/anaconda3:2023.03-1
 
 ARG ARG_BUCKET_NAME
 ARG ARG_DATABASE_NAME
