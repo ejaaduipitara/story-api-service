@@ -42,12 +42,14 @@ tts_mapping = {
     "te": "ai4bharat/indic-tts-coqui-dravidian-gpu--t4"
 }
 
+
 def is_url(string):
     try:
         result = urlparse(string)
         return all([result.scheme, result.netloc])
     except ValueError:
         return False
+
 
 def get_encoded_string(url):
     if is_url(url):
@@ -70,6 +72,7 @@ def get_encoded_string(url):
     os.remove("temp.wav")
     return encoded_string, wav_file_content
 
+
 def google_speech_to_text(wav_file_content, input_language):
     client = speech.SpeechClient()
     audio = speech.RecognitionAudio(content=wav_file_content)
@@ -82,9 +85,10 @@ def google_speech_to_text(wav_file_content, input_language):
     response = client.recognize(config=config, audio=audio)
     return response.results[0].alternatives[0].transcript
 
+
 def speech_to_text(encoded_string, input_language):
 
-    url = "https://api.dhruva.ai4bharat.org/services/inference/pipeline"
+    url = os.environ["BHASHINI_ENDPOINT_URL"]
 
     payload = json.dumps({
         "pipelineTasks": [
@@ -107,13 +111,15 @@ def speech_to_text(encoded_string, input_language):
         }
     })
     headers = {
-        'Authorization': os.environ["AI4BHARAT_API_KEY"],
+        'Authorization': os.environ["BHASHINI_API_KEY"],
         'Content-Type': 'application/json'
     }
 
     response = requests.request("POST", url, headers=headers, data=payload)
-    text = json.loads(response.text)["pipelineResponse"][0]["output"][0]["source"]
+    text = json.loads(response.text)[
+        "pipelineResponse"][0]["output"][0]["source"]
     return text
+
 
 def google_translate_text(text, source, destination, project_id="indian-legal-bert"):
     client = translate.TranslationServiceClient()
@@ -130,11 +136,12 @@ def google_translate_text(text, source, destination, project_id="indian-legal-be
     )
     return response.translations[0].translated_text
 
+
 def indic_translation(text, source, destination):
     if source == destination:
         return text
     try:
-        url = "https://api.dhruva.ai4bharat.org/services/inference/pipeline"
+        url = os.environ["BHASHINI_ENDPOINT_URL"]
 
         payload = json.dumps({
             "pipelineTasks": [
@@ -158,15 +165,17 @@ def indic_translation(text, source, destination):
             }
         })
         headers = {
-            'Authorization': os.environ["AI4BHARAT_API_KEY"],
+            'Authorization': os.environ["BHASHINI_API_KEY"],
             'Content-Type': 'application/json'
         }
 
         response = requests.request("POST", url, headers=headers, data=payload)
-        indic_text = json.loads(response.text)["pipelineResponse"][0]["output"][0]["target"]
+        indic_text = json.loads(response.text)[
+            "pipelineResponse"][0]["output"][0]["target"]
     except:
         indic_text = google_translate_text(text, source, destination)
     return indic_text
+
 
 def google_text_to_speech(text, language):
     try:
@@ -180,16 +189,18 @@ def google_text_to_speech(text, language):
             audio_encoding=texttospeech.AudioEncoding.MP3
         )
         response = client.synthesize_speech(
-            request={"input": input_text, "voice": voice, "audio_config": audio_config}
+            request={"input": input_text, "voice": voice,
+                     "audio_config": audio_config}
         )
         audio_content = response.audio_content
     except:
         audio_content = None
     return audio_content
 
+
 def text_to_speech(language, text, gender='female'):
     try:
-        url = "https://api.dhruva.ai4bharat.org/services/inference/pipeline"
+        url = os.environ["BHASHINI_ENDPOINT_URL"]
 
         payload = json.dumps({
             "pipelineTasks": [
@@ -218,16 +229,18 @@ def text_to_speech(language, text, gender='female'):
             }
         })
         headers = {
-            'Authorization': os.environ["AI4BHARAT_API_KEY"],
+            'Authorization': os.environ["BHASHINI_API_KEY"],
             'Content-Type': 'application/json'
         }
 
         response = requests.request("POST", url, headers=headers, data=payload)
-        audio_content = response.json()["pipelineResponse"][0]['audio'][0]['audioContent']
+        audio_content = response.json(
+        )["pipelineResponse"][0]['audio'][0]['audioContent']
         audio_content = base64.b64decode(audio_content)
     except:
         audio_content = google_text_to_speech(text, language)
     return audio_content
+
 
 def audio_input_to_text(audio_file, input_language):
     encoded_string, wav_file_content = get_encoded_string(audio_file)
