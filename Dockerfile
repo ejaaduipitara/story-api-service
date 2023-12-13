@@ -4,21 +4,21 @@ WORKDIR /root
 RUN apt-get update && apt-get install -y curl file
 RUN curl https://sh.rustup.rs -sSf | sh -s -- -y
 ENV PATH=$PATH:/root/.cargo/bin \
-    GOOGLE_APPLICATION_CREDENTIALS=gcp_credentials.json \
-    BUCKET_NAME=$BUCKET_NAME  \
-    DATABASE_NAME=$DATABASE_NAME \
-    DATABASE_USERNAME=$DATABASE_USERNAME \
-    DATABASE_PASSWORD=$DATABASE_PASSWORD \
-    DATABASE_IP=$DATABASE_IP \
-    DATABASE_PORT=$DATABASE_PORT \
     OPENAI_API_KEY=$OPENAI_API_KEY \
-    AI4BHARAT_API_KEY=$AI4BHARAT_API_KEY
+    LOG_LEVEL=$LOG_LEVEL  \
+    BHASHINI_ENDPOINT_URL=$BHASHINI_ENDPOINT_URL \
+    BHASHINI_API_KEY=$BHASHINI_API_KEY \
+    OCI_ENDPOINT_URL=$OCI_ENDPOINT_URL \
+    OCI_REGION_NAME=$OCI_REGION_NAME \
+    OCI_BUCKET_NAME=$OCI_BUCKET_NAME \
+    OCI_SECRET_ACCESS_KEY=$OCI_SECRET_ACCESS_KEY \
+    OCI_ACCESS_KEY_ID=$OCI_ACCESS_KEY_ID
 RUN apt-get update && apt install build-essential --fix-missing -y
 RUN wget --no-check-certificate https://dl.xpdfreader.com/xpdf-tools-linux-4.04.tar.gz &&  \
     tar -xvf xpdf-tools-linux-4.04.tar.gz && cp xpdf-tools-linux-4.04/bin64/pdftotext /usr/local/bin
 RUN apt-get install ffmpeg -y
 COPY requirements-prod.txt /root/
 RUN pip3 install -r requirements-prod.txt
-COPY gcp_credentials.json main.py query_with_gptindex.py cloud_storage.py query_with_langchain.py io_processing.py translator.py database_functions.py query_with_tfidf.py Titles.csv script.sh /root/
+COPY main.py cloud_storage_oci.py query_with_langchain.py io_processing.py translator.py logger.py script.sh /root/
 EXPOSE 8000
 ENTRYPOINT ["bash","script.sh"]
