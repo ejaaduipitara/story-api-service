@@ -30,36 +30,48 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-class ResponseForAudio(BaseModel):
-    query: str = None
-    query_in_english: str = None
-    answer: str = None
-    answer_in_english: str = None
-    audio_output_url: str = None
-    source_text: str = None
 
 class DropdownOutputFormat(str, Enum):
-    TEXT = "Text"
-    VOICE = "Voice"
+    TEXT = "text"
+    VOICE = "voice"
 
 class DropDownInputLanguage(str, Enum):
-    en = "English"
-    bn = "Bengali"
-    gu = "Gujarati"
-    hi = "Hindi"
-    kn = "Kannada"
-    ml = "Malayalam"
-    mr = "Marathi"
-    ori = "Oriya"
-    pa = "Punjabi"
-    ta = "Tamil"
-    te = "Telugu"
+    en = "en"
+    bn = "bn"
+    gu = "gu"
+    hi = "hi"
+    kn = "kn"
+    ml = "ml"
+    mr = "mr"
+    ori = "or"
+    pa = "pa"
+    ta = "ta"
+    te = "te"
 
+class OutputResponse(BaseModel):
+    text: str
+    audio: str = None
+    language: DropDownInputLanguage
+
+class ResponseForQuery(BaseModel):
+    output: OutputResponse
+    
 class HealthCheck(BaseModel):
     """Response model to validate and return when performing a health check."""
 
     status: str = "OK"
 
+class QueryInputModel(BaseModel):
+    language: DropDownInputLanguage
+    text:str = None
+    audio:str = None
+
+class QueryOuputModel(BaseModel):
+    format: DropdownOutputFormat
+
+class QueryModel(BaseModel):
+    input: QueryInputModel
+    output: QueryOuputModel
 
 @app.get("/")
 async def root():
@@ -86,27 +98,28 @@ def get_health() -> HealthCheck:
     """
     return HealthCheck(status="OK")
 
-@app.get("/query-using-voice", tags=["Q&A over Document Store"])
-async def query_with_voice_input(input_language: DropDownInputLanguage,
-                                 output_format: DropdownOutputFormat, query_text: str = "",
-                                 audio_url: str = "") -> ResponseForAudio:
+@app.post("/v1/query", tags=["Q&A over Document Store"])
+async def query(request: QueryModel) -> ResponseForQuery:
     load_dotenv()
-    language = 'or' if input_language.name == DropDownInputLanguage.ori.name else input_language.name
+    language = 'or' if request.input.language.name == DropDownInputLanguage.ori.name else request.input.language.name
+    output_format = request.output.format.name
+    audio_url = request.input.audio
+    query_text = request.input.text
     is_audio = False
     text = None
     regional_answer = None
     answer = None
     audio_output_url = None
     source_text = None
-    logger.info({"label": "query", "query_text":query_text,"input_language": input_language, "output_format": output_format, "audio_url": audio_url})
-    if query_text == "" and audio_url == "":
+    logger.info({"label": "query", "query_text":query_text,"input_language": language, "output_format": output_format, "audio_url": audio_url})
+    if query_text is None and audio_url is None:
         query_text = None
-        error_message = "Either 'Query Text' or 'Audio URL' should be present"
+        error_message = "Either 'Query text' or 'audio' should be present"
         status_code = 422
     else:
-        if query_text != "":
+        if query_text is not None:
             text, error_message = process_incoming_text(query_text, language)
-            if output_format.name == "VOICE":
+            if output_format == "VOICE":
                 is_audio = True
         else:
             query_text, text, error_message = process_incoming_voice(audio_url, language)
@@ -128,22 +141,15 @@ async def query_with_voice_input(input_language: DropDownInputLanguage,
                         else:
                             status_code = 503
                     else:
-                        audio_output_url = ""
+                        audio_output_url = None
                 else:
                     status_code = 503
         else:
             status_code = 503
 
     if status_code != 200:
-        logger.error({"query":query_text, "input_language": input_language, "output_format": output_format, "audio_url": audio_url, "status_code": status_code, "error_message": error_message})
+        logger.error({"query":query_text, "input_language": language, "output_format": output_format, "audio_url": audio_url, "status_code": status_code, "error_message": error_message})
         raise HTTPException(status_code=status_code, detail=error_message)
 
-    response = ResponseForAudio()
-    response.query = query_text
-    response.query_in_english = text
-    response.answer = regional_answer
-    response.answer_in_english = answer
-    response.audio_output_url = audio_output_url
-    response.source_text = source_text
-    logger.info(msg=response)
-    return response
+    return ResponseForQuery(output=OutputResponse(text=regional_answer, audio=audio_output_url, language=language))
+    
