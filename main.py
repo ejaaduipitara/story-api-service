@@ -33,7 +33,7 @@ app.add_middleware(
 
 class DropdownOutputFormat(str, Enum):
     TEXT = "text"
-    VOICE = "voice"
+    AUDIO = "audio"
 
 class DropDownInputLanguage(str, Enum):
     en = "en"
@@ -119,7 +119,7 @@ async def query(request: QueryModel) -> ResponseForQuery:
     else:
         if query_text is not None:
             text, error_message = process_incoming_text(query_text, language)
-            if output_format == "VOICE":
+            if output_format == "AUDIO":
                 is_audio = True
         else:
             query_text, text, error_message = process_incoming_voice(audio_url, language)
