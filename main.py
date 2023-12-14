@@ -151,5 +151,7 @@ async def query(request: QueryModel) -> ResponseForQuery:
         logger.error({"query":query_text, "input_language": language, "output_format": output_format, "audio_url": audio_url, "status_code": status_code, "error_message": error_message})
         raise HTTPException(status_code=status_code, detail=error_message)
 
-    return ResponseForQuery(output=OutputResponse(text=regional_answer, audio=audio_output_url, language=language))
+    response = ResponseForQuery(output=OutputResponse(text=regional_answer, audio=audio_output_url, language=language))
+    logger.info(response)
+    return response
     
