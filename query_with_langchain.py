@@ -1,14 +1,15 @@
 import os
 from openai import OpenAI, RateLimitError, APIError, InternalServerError
+from openai.types import ModerationCreateResponse
 from dotenv import load_dotenv
 from logger import logger
 load_dotenv()
+client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
 
 def querying_with_langchain_gpt4(query):
     try:
         logger.debug(f"Query ===> {query}")
         system_rules = "I want you to act as an Indian story teller. You will come up with entertaining stories that are engaging, imaginative and captivating for children in India. It can be fairy tales, educational stories or any other type of stories which has the potential to capture children’s attention and imagination. A story should not be more than 200 words. The audience for the stories do not speak English natively. So use very simple English with short and simple sentences, no complex or compound sentences. Extra points if the story ends with an unexpected twist."
-        client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
         res = client.chat.completions.create(
             model="gpt-4",
             messages=[
@@ -19,7 +20,11 @@ def querying_with_langchain_gpt4(query):
         message = res.choices[0].message.model_dump()
         response = message["content"]
         logger.info({"label": "openai_response", "response": response})
-        return response, "", "", None, 200
+        response, error_message = moderate_text(response)
+        if error_message is not None:
+            return None, None, None, error_message, 500
+        else:
+            return response, "", "", None, 200
     except RateLimitError as e:
         error_message = f"OpenAI API request exceeded rate limit: {e}"
         status_code = 500
@@ -30,3 +35,29 @@ def querying_with_langchain_gpt4(query):
         error_message = str(e.__context__) + " and " + e.__str__()
         status_code = 500
     return None, None, None, error_message, status_code
+
+def moderate_text(text:str):
+    """
+    Moderates the provided text using the OpenAI API.
+
+    Args:
+        text: The text to be moderated.
+
+    Returns:
+        A dictionary containing the moderation results and errors.
+    """
+
+    try:
+        # Send moderation request
+        response: ModerationCreateResponse = client.moderations.create(input=text)
+        result = response.results[0]
+        logger.info({"label": "openai_moderation", "response":result })
+        if result.flagged:
+            text = "As the Sakhi Virtual Assistant, I'm dedicated to providing informative and supportive assistance related to Activities, Stories, Songs, Riddles and Rhymes suitable for 3-8 year old children. Your question has been identified as inappropriate due to its harassment and violent threat content. I encourage a respectful and constructive dialogue focused on educational matters. How can I assist you further with your queries?"
+        return text, None
+    except Exception as e:
+        error_message = str(e.__context__) + " and " + e.__str__()
+        logger.error(f"Error moderating text: {error_message}")
+        return None, error_message
+
+    
