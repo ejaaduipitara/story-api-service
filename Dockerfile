@@ -19,6 +19,6 @@ RUN wget --no-check-certificate https://dl.xpdfreader.com/xpdf-tools-linux-4.04.
 RUN apt-get install ffmpeg -y
 COPY requirements-prod.txt /root/
 RUN pip3 install -r requirements-prod.txt
-COPY main.py cloud_storage_oci.py query_with_langchain.py io_processing.py translator.py logger.py script.sh /root/
+COPY main.py cloud_storage_oci.py query_with_langchain.py io_processing.py translator.py logger.py script.sh utils.py /root/
 EXPOSE 8000
 ENTRYPOINT ["bash","script.sh"]
