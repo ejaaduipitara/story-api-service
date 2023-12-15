@@ -7,6 +7,7 @@ from io_processing import *
 from query_with_langchain import *
 from cloud_storage_oci import *
 from logger import logger
+from utils import *
 
 api_description = """
 """
@@ -52,6 +53,7 @@ class OutputResponse(BaseModel):
     text: str
     audio: str = None
     language: DropDownInputLanguage
+    format: DropdownOutputFormat
 
 class ResponseForQuery(BaseModel):
     output: OutputResponse
@@ -122,6 +124,9 @@ async def query(request: QueryModel) -> ResponseForQuery:
             if output_format == "AUDIO":
                 is_audio = True
         else:
+            if not is_url(audio_url) and not is_base64(audio_url):
+                logger.error({"query":query_text, "input_language": language, "output_format": output_format, "audio_url": audio_url, "status_code": status.HTTP_422_UNPROCESSABLE_ENTITY, "error_message": "Invalid audio input!"})
+                raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Invalid audio input!")
             query_text, text, error_message = process_incoming_voice(audio_url, language)
             is_audio = True
 
@@ -151,7 +156,7 @@ async def query(request: QueryModel) -> ResponseForQuery:
         logger.error({"query":query_text, "input_language": language, "output_format": output_format, "audio_url": audio_url, "status_code": status_code, "error_message": error_message})
         raise HTTPException(status_code=status_code, detail=error_message)
 
-    response = ResponseForQuery(output=OutputResponse(text=regional_answer, audio=audio_output_url, language=language))
+    response = ResponseForQuery(output=OutputResponse(text=regional_answer, audio=audio_output_url, language=language, format=output_format.lower()))
     logger.info(response)
     return response
     
