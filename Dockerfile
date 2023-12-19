@@ -12,8 +12,8 @@ ENV PATH=$PATH:/root/.cargo/bin \
     OCI_REGION_NAME=$OCI_REGION_NAME \
     OCI_BUCKET_NAME=$OCI_BUCKET_NAME \
     OCI_SECRET_ACCESS_KEY=$OCI_SECRET_ACCESS_KEY \
-    OCI_ACCESS_KEY_ID=$OCI_ACCESS_KEY_ID
-    SERVICE_ENVIRONMENT=$SERVICE_ENVIRONMENT
+    OCI_ACCESS_KEY_ID=$OCI_ACCESS_KEY_ID \
+    SERVICE_ENVIRONMENT=$SERVICE_ENVIRONMENT \
     TELEMETRY_ENDPOINT_URL=$TELEMETRY_ENDPOINT_URL
 RUN apt-get update && apt install build-essential --fix-missing -y
 RUN wget --no-check-certificate https://dl.xpdfreader.com/xpdf-tools-linux-4.04.tar.gz &&  \
