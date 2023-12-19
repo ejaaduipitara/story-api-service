@@ -98,7 +98,9 @@ telemetryLogger = TelemetryLogger()
 async def add_process_time_header(request: Request, call_next):
     start_time = time.time()
     await set_body(request, await request.body())
-    body = json.loads(await get_body(request))
+    body = await get_body(request)
+    if body.decode("utf-8"):
+        body = json.loads(body)
     response = await call_next(request)
     process_time = time.time() - start_time
     if "v1" in str(request.url):
