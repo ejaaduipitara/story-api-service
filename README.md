@@ -61,7 +61,6 @@ The command `uvicorn main:app` refers to:
     uvicorn main:app --reload
     ```
 
-When you try to open the URL for the first time (or click the "Execute" button in the docs) the browser will ask you for your username and password (Which you provided in the `.env` file):
 
 ![Alt text](docs/image.png)
 
