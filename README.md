@@ -1,6 +1,34 @@
 # Story API Service
 
-Story API is a system of APIs that allows users to build Q&A style applications on their private and public datasets. The system creates Open API 3.0 specification endpoints using FastAPI.
+Welcome to "Story Sakhi" service, your go-to solution for generating captivating and imaginative stories effortlessly. This innovative service is designed to cater to a diverse audience, ensuring an engaging storytelling experience for users of all backgrounds and interests.
+
+What does the Service do?
+
+"Story Sakhi" is a powerful tool crafted to breathe life into your ideas. Its primary function is to generate creative stories based on topics provided by the user.
+
+### Key Features:
+
+#### Creative Story Generation: 
+The heart of "Story Sakhi" lies in its ability to generate unique and imaginative stories. Simply input a topic, and watch as the service weaves a narrative that captivates and inspires.
+
+#### LLM Capabilities: 
+Leveraging the latest in Language Model technology, "Story Sakhi" boasts advanced capabilities for Language Model-driven storytelling. This ensures a rich and coherent narrative that aligns seamlessly with your input.
+
+#### Multilingual Support: 
+"Story Sakhi" goes beyond linguistic barriers by supporting Indic languages. Now, you can explore creative storytelling in languages such as Hindi, Tamil, Bengali, and various other Indic languages, broadening the horizons of your imaginative journey.
+
+#### Versatile Input and Output: 
+"Story Sakhi" understands the diversity of user preferences. Whether you prefer to communicate through text or voice, the service supports both audio and text queries and provides responses in your preferred format.
+
+Who can benefit?
+
+"Story Sakhi" is designed for a broad audience. Parents, Teachers, Students, or anyone with a passion for storytelling can harness the power of our service.
+
+#### How to Get Started:
+
+Using "Story Sakhi" is a breeze. With user-friendly interfaces and straightforward instructions, you can dive into the world of limitless storytelling in no time. Simply provide a topic, and let the magic unfold.
+
+Unleash your creativity with "Story Sakhi" and experience the joy of storytelling like never before. The possibilities are endless, and the stories are yours to create!
 
 ### Prerequisites
 
