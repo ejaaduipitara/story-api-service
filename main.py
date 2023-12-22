@@ -8,7 +8,7 @@ from io_processing import *
 from query_with_langchain import *
 from cloud_storage_oci import *
 from logger import logger
-from telemetry_logger import TelemetryLogger
+from telemetry_middleware import TelemetryMiddleware
 from utils import *
 
 api_description = """
@@ -77,6 +77,8 @@ class QueryModel(BaseModel):
     input: QueryInputModel
     output: QueryOuputModel
 
+# Telemetry API logs middleware
+app.add_middleware(TelemetryMiddleware)
 
 async def set_body(request: Request, body: bytes):
     async def receive() -> Message:
