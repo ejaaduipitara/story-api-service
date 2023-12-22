@@ -1,13 +1,13 @@
 import os.path
 from enum import Enum
-from fastapi import FastAPI, HTTPException, status, Request
-from starlette.types import Message
+
+from fastapi import FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+
+from cloud_storage_oci import *
 from io_processing import *
 from query_with_langchain import *
-from cloud_storage_oci import *
-from logger import logger
 from telemetry_middleware import TelemetryMiddleware
 from utils import *
 
@@ -79,38 +79,6 @@ class QueryModel(BaseModel):
 
 # Telemetry API logs middleware
 app.add_middleware(TelemetryMiddleware)
-
-async def set_body(request: Request, body: bytes):
-    async def receive() -> Message:
-        return {"type": "http.request", "body": body}
-
-    request._receive = receive
-
-
-async def get_body(request: Request) -> bytes:
-    body = await request.body()
-    await set_body(request, body)
-    return body
-
-
-telemetryLogger = TelemetryLogger()
-
-
-@app.middleware("http")
-async def add_process_time_header(request: Request, call_next):
-    start_time = time.time()
-    await set_body(request, await request.body())
-    body = await get_body(request)
-    if body.decode("utf-8"):
-        body = json.loads(body)
-    response = await call_next(request)
-    process_time = time.time() - start_time
-    if "v1" in str(request.url):
-        event = telemetryLogger.prepare_log_event(request, body)
-        telemetryLogger.add_event(event)
-    response.headers["X-Process-Time"] = str(process_time)
-    return response
-
 
 @app.get("/")
 async def root():
