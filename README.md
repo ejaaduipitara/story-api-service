@@ -1,6 +1,38 @@
-# Sakhi Activity API Service
+# Story API Service
 
-[Jugalbandi API](https://api.jugalbandi.ai/docs) is a system of APIs that allows users to build Q&A style applications on their private and public datasets. The system creates Open API 3.0 specification endpoints using FastAPI.
+Welcome to "Story Sakhi" service, your go-to solution for generating captivating and imaginative stories effortlessly. This innovative service is designed to cater to a diverse audience, ensuring an engaging storytelling experience for users of all backgrounds and interests.
+
+What does the Service do?
+
+"Story Sakhi" is a powerful tool crafted to breathe life into your ideas. Its primary function is to generate creative stories based on topics provided by the user.
+
+### Key Features:
+
+#### Creative Story Generation: 
+The heart of "Story Sakhi" lies in its ability to generate unique and imaginative stories. Simply input a topic, and watch as the service weaves a narrative that captivates and inspires.
+
+#### LLM Capabilities: 
+Leveraging the latest in Language Model technology, "Story Sakhi" boasts advanced capabilities for Language Model-driven storytelling. This ensures a rich and coherent narrative that aligns seamlessly with your input.
+
+#### Multilingual Support: 
+"Story Sakhi" goes beyond linguistic barriers by supporting Indic languages. Now, you can explore creative storytelling in languages such as Hindi, Tamil, Bengali, and various other Indic languages, broadening the horizons of your imaginative journey.
+
+#### Versatile Input and Output: 
+"Story Sakhi" understands the diversity of user preferences. Whether you prefer to communicate through text or voice, the service supports both audio and text queries and provides responses in your preferred format.
+
+Who can benefit?
+
+"Story Sakhi" is designed for a broad audience. Parents, Teachers, Students, or anyone with a passion for storytelling can harness the power of our service.
+
+#### How to Get Started:
+
+Using "Story Sakhi" is a breeze. With user-friendly interfaces and straightforward instructions, you can dive into the world of limitless storytelling in no time. Simply provide a topic, and let the magic unfold.
+
+Unleash your creativity with "Story Sakhi" and experience the joy of storytelling like never before. The possibilities are endless, and the stories are yours to create!
+
+### Prerequisites
+
+- **Python 3.7 or higher**
 
 
 # 🔧 1. Installation
@@ -12,14 +44,17 @@ To use the code, you need to follow these steps:
     ```bash
     git clone https://github.com/DJP-Digital-Jaaduii-Pitara/story-api-service.git
     ```
+    ```
+   cd story-api-service
+   ```
 
 2. The code requires **Python 3.7 or higher** and some additional python packages. To install these packages, run the following command in your terminal:
 
     ```bash
-    pip install requirements-dev.txt
+    pip install -r requirements-dev.txt
     ```
 
-3. You will need a OCI account to store the audio file for response.
+3. You will need an OCI account to store the audio file for response.
 
 4. create another file **.env** which will hold the development credentials and add the following variables. Update the openai_api_key, OCI object storage details and bhashini endpoint URL and API Key.
 
@@ -46,26 +81,79 @@ Once the above installation steps are completed, run the following command in ho
 uvicorn main:app
 ```
 
+Open your browser at http://127.0.0.1:8000/docs to access the application.
+
+The command `uvicorn main:app` refers to:
+
+- `main`: the file `main.py` (the Python "module").
+- `app`: the object created inside of `main.py` with the line `app = FastAPI()`.
+- `--reload`:  make the server restart after code changes. Only do this for development.
+    ```bash
+    uvicorn main:app --reload
+    ```
+
+
+![Alt text](docs/image.png)
+
 # 📃 3. API Specification and Documentation
 
-### `GET /query-using-voice`
+### `POST /v1/query`
+
+#### API Function
+API is used to generate activity/story based on user query and translation of text/audio from one language to another language in text/audio format. To achieve the same, Bhashini has been integrated. OCI object storage has been used to store translated audio files when audio is chosen as target output format.
+
+```commandline
+curl -X 'POST' \
+  'http://127.0.0.1:8000/v1/query' \
+  -H 'accept: application/json' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "input": {
+    "language": "en",
+    "text": "string",
+    "audio": "string"
+  },
+  "output": {
+    "format": "text"
+  }
+}'
+```
 
 #### Request
+| Request Input      |                                                       Value |
+|:-------------------|----------------------------------|
+| input.language     | en,bn,gu,hi,kn,ml,mr,or,pa,ta,te |
+| input.text         | User entered question (any of the above language) |
+| input.audio        | Public file URL Or Base64 encoded audio |
+| output.format      | text or audio |
 
-Requires an input_language(Selection - English, Hindi, Kannada, etc..) and output_format(Selection - Text, Voice).
+Required inputs are 'text', 'audio' and 'language'.
 
-Either of the query_text(string) or audio_url(string) should be present. If both the values are given, query_text is taken for consideration. Another requirement is that the input_language should be same as the one given in query_text and audio_url (i.e, if you select English in input_language, then your query_text and audio_url should contain queries in English). The audio_url should be publicly downloadable, otherwise the audio_url will not work.
+Either of the `text`(string) or `audio`(string) should be present. If both the values are given, `text` is taken for consideration. Another requirement is that the `language` should be same as the one given in text and audio (i.e, if you pass English as `language`, then your `text/audio` should contain queries in English language). The audio should either contain a publicly downloadable url of mp3 file or base64 encoded text of the mp3.
+If output format is given as `text` than response will return text format only. If output format is given as `audio` than response will return text and audio both.
+
+```json
+{
+   "input": {
+      "text": "How to Teach Kids to Play Games", 
+      "language": "en"
+   },
+   "output": {
+      "format": "text"
+   }
+}
+```
 
 #### Successful Response
 
 ```json
 {
-  "query": "<query-in-given-language>",
-  "query_in_english": "<query-in-english>",
-  "answer": "<paraphrased-answer-in-given-language>",
-  "answer_in_english": "<paraphrased-answer-in-english>",
-  "audio_output_url": "<publicly-downloadable-audio-output-url-in-given-language>",
-  "source_text": "<source-text-from-which-answer-is-paraphrased-in-english>"
+  "output": {
+    "text": "string",
+    "audio": "string",
+    "language": "en",
+    "format": "text|audio"
+  }
 }
 ```
 
@@ -73,9 +161,9 @@ Either of the query_text(string) or audio_url(string) should be present. If both
 
 Once the API is hit with proper request parameters, it is then checked for the presence of query_text. 
 
-If query_text is present, the translation of query_text based on input_language is done. Then the translated query_text is given to langchain model which does the same work as `/query-with-langchain` endpoint. Then the paraphrased answer is again translated back to input_language. If the output_format is voice, the translated paraphrased answer is then converted to a mp3 file and uploaded to a OCI folder and made public.
+If query text is present, the translation of query text based on input language is done. Then the translated query text is given to langchain model which does the same work as `/query-with-langchain` endpoint. Then the paraphrased answer is again translated back to input_language. If the output_format is voice, the translated paraphrased answer is then converted to a mp3 file and uploaded to an OCI folder and made public.
 
-If the query_text is absent and audio_url is present, then the audio url is downloaded and converted into text based on the input_language. Once speech to text conversion in input_language is finished, the same process mentioned above happens. One difference is that by default, the paraphrased answer is converted to voice irrespective of the output_format since the input_format is voice.
+If the query text is absent and audio url is present, then the audio url is downloaded and converted into text based on the input language. Once speech to text conversion in input language is finished, the same process mentioned above happens. One difference is that by default, the paraphrased answer is converted to voice irrespective of the output format since the input format is voice.
 
 ---
 
