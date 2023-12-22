@@ -1,13 +1,13 @@
 import os.path
 from enum import Enum
-from fastapi import FastAPI, HTTPException, status, Request
-from starlette.types import Message
+
+from fastapi import FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+
+from cloud_storage_oci import *
 from io_processing import *
 from query_with_langchain import *
-from cloud_storage_oci import *
-from logger import logger
 from telemetry_middleware import TelemetryMiddleware
 from utils import *
 
