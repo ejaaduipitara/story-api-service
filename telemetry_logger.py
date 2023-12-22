@@ -77,13 +77,13 @@ class TelemetryLogger:
             "ver": "3.1",  # Version
             "mid": f"LOG:{round(time.time())}",  # Unique message ID
             "actor": {
-                "id": "sakhi-api-service",
+                "id": "story-api-service",
                 "type": "System",
             },
             "context": {
                 "channel": "ejp",
                  "pdata": {
-                    "id": "ejp.sakhi.api.service",
+                    "id": "ejp.story.api.service",
                     "ver": "1.0",
                     "pid": ""
                 },
