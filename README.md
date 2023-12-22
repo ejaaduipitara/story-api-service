@@ -33,6 +33,9 @@ To use the code, you need to follow these steps:
     OCI_BUCKET_NAME=<oracle_bucket_name>
     OCI_SECRET_ACCESS_KEY=<oracle_secret_access_key>
     OCI_ACCESS_KEY_ID=<oracle_access_key_id>
+    SERVICE_ENVIRONMENT=<environment_name>
+    TELEMETRY_ENDPOINT_URL=<telemetry_service_base_url>
+    TELEMETRY_LOG_ENABLED=<true_or_false>
     ```
 
 # 🏃🏻 2. Running
