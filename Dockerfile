@@ -13,6 +13,7 @@ ENV PATH=$PATH:/root/.cargo/bin \
     OCI_BUCKET_NAME=$OCI_BUCKET_NAME \
     OCI_SECRET_ACCESS_KEY=$OCI_SECRET_ACCESS_KEY \
     OCI_ACCESS_KEY_ID=$OCI_ACCESS_KEY_ID \
+    MARQO_URL=$MARQO_URL \
     SERVICE_ENVIRONMENT=$SERVICE_ENVIRONMENT \
     TELEMETRY_ENDPOINT_URL=$TELEMETRY_ENDPOINT_URL \
     TELEMETRY_LOG_ENABLED=$TELEMETRY_LOG_ENABLED
@@ -22,6 +23,6 @@ RUN wget --no-check-certificate https://dl.xpdfreader.com/xpdf-tools-linux-4.04.
 RUN apt-get install ffmpeg -y
 COPY requirements-prod.txt /root/
 RUN pip3 install -r requirements-prod.txt
-COPY main.py cloud_storage_oci.py query_with_langchain.py io_processing.py translator.py logger.py script.sh utils.py telemetry_logger.py telemetry_middleware.py /root/
+COPY main.py cloud_storage_oci.py query_with_langchain.py io_processing.py translator.py logger.py script.sh utils.py telemetry_logger.py telemetry_middleware.py config.ini config_util.py /root/
 EXPOSE 8000
 ENTRYPOINT ["bash","script.sh"]
