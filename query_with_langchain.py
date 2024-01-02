@@ -4,7 +4,7 @@ from typing import (
     List,
     Tuple
 )
-from openai import OpenAI, RateLimitError, APIError, InternalServerError
+from openai import AzureOpenAI, RateLimitError, APIError, InternalServerError
 from openai.types import ModerationCreateResponse
 import marqo
 from langchain.docstore.document import Document
@@ -14,7 +14,11 @@ from logger import logger
 from config_util import get_config_value
 
 load_dotenv()
-client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
+client = AzureOpenAI(
+            azure_endpoint=os.environ["OPENAI_API_BASE"],
+            api_key=os.environ["OPENAI_API_KEY"],
+            api_version=os.environ["OPENAI_API_VERSION"]
+        )
 marqo_url = get_config_value("database", "MARQO_URL", None)
 marqoClient = marqo.Client(url=marqo_url)
 
