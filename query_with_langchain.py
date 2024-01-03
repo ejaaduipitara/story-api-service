@@ -107,7 +107,7 @@ def query_rstory_gpt3(index_id, query):
         message = res.choices[0].message.model_dump()
         response = message["content"]
         logger.info({"label": "openai_response", "response": response})
-        response, error_message = moderate_text(response)
+        # response, error_message = moderate_text(response)
         # if error_message is not None:
         #     return "", error_message, 500
         return response, None, 200
