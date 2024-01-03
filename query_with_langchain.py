@@ -37,11 +37,11 @@ def querying_with_langchain_gpt4(query):
         message = res.choices[0].message.model_dump()
         response = message["content"]
         logger.info({"label": "openai_response", "response": response})
-        response, error_message = moderate_text(response)
-        if error_message is not None:
-            return None, None, None, error_message, 500
-        else:
-            return response, "", "", None, 200
+        # response, error_message = moderate_text(response)
+        # if error_message is not None:
+        #     return None, None, None, error_message, 500
+        # else:
+        return response, "", "", None, 200
     except RateLimitError as e:
         error_message = f"OpenAI API request exceeded rate limit: {e}"
         status_code = 500
@@ -108,8 +108,8 @@ def query_rstory_gpt3(index_id, query):
         response = message["content"]
         logger.info({"label": "openai_response", "response": response})
         response, error_message = moderate_text(response)
-        if error_message is not None:
-            return "", error_message, 500
+        # if error_message is not None:
+        #     return "", error_message, 500
         return response, None, 200
     except RateLimitError as e:
         error_message = f"OpenAI API request exceeded rate limit: {e}"
