@@ -33,7 +33,24 @@ Unleash your creativity with "Story Sakhi" and experience the joy of storytellin
 ### Prerequisites
 
 - **Python 3.7 or higher**
+- Latest Docker
 
+### [Marqo database setup](https://docs.marqo.ai/1.5.0/#setup-and-installation)
+
+1. To get the Marqo image, use the following command:
+
+```shell
+docker pull marqoai/marqo:latest
+```
+
+2. To create the Marqo instance, run the following command:
+
+```shell
+docker run --name marqo --privileged \
+  -p 8882:8882 \
+  --add-host host.docker.internal:host-gateway \
+  -d marqoai/marqo:latest
+```
 
 # 🔧 1. Installation
 
@@ -54,12 +71,34 @@ To use the code, you need to follow these steps:
     pip install -r requirements-dev.txt
     ```
 
-3. You will need an OCI account to store the audio file for response.
-
-4. create another file **.env** which will hold the development credentials and add the following variables. Update the openai_api_key, OCI object storage details and bhashini endpoint URL and API Key.
+3. To injest data to marqo
 
     ```bash
-    OPENAI_API_KEY=<your_openai_key>
+    python3 index_documents.py --marqo_url=<MARQO_URL> --index_name=<MARQO_INDEX_NAME> --folder_path=<PATH_TO_INPUT_FILE_DIRECTORY>
+    ```
+
+   PATH_TO_INPUT_FILE_DIRECTORY should have only PDF, audio, video and txt file only.
+
+   e.g.
+   ```bash
+   python3 index_documents.py --marqo_url=http://0.0.0.0:8882 --index_name=sakhi_rstory --folder_path=story_pdfs
+   ```
+   Create the index by using the above command. After creating the index add the index name in `config.ini` file.
+
+   ```json
+   [marqo]  
+   index_name=<STORY_INDEX_NAME>
+   ```
+
+4. You will need an OCI account to store the audio file for response.
+
+5. create another file **.env** which will hold the development credentials and add the following variables. Update the Azure OpenAI details, OCI object storage details and bhashini endpoint URL and API Key.
+
+    ```bash
+    OPENAI_API_BASE=<your_azure_openai_api_base_url>
+    OPENAI_API_VERSION=<your_azure_api_version>
+    OPENAI_API_KEY=<your_azure_api_key>
+    GPT_MODEL=<your_gpt_model>
     LOG_LEVEL=<log_level>  # INFO, DEBUG, ERROR
     BHASHINI_ENDPOINT_URL=<your_bhashini_endpoint_url>
     BHASHINI_API_KEY=<your_bhashini_api_key>
@@ -69,6 +108,7 @@ To use the code, you need to follow these steps:
     OCI_SECRET_ACCESS_KEY=<oracle_secret_access_key>
     OCI_ACCESS_KEY_ID=<oracle_access_key_id>
     SERVICE_ENVIRONMENT=<environment_name>
+    MARQO_URL=<your_marqo_db_url>
     TELEMETRY_ENDPOINT_URL=<telemetry_service_base_url>
     TELEMETRY_LOG_ENABLED=<true_or_false>
     ```

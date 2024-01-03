@@ -95,7 +95,7 @@ def query_rstory_gpt3(index_id, query):
         system_rules = system_rules.format(contexts=contexts)
         logger.info("==== System Rules ====")
         logger.debug(system_rules)
-        gpt_model = get_config_value("llm", "gpt_model", "gpt-4")
+        gpt_model = get_config_value("llm", "GPT_MODEL", "gpt-4")
         res = client.chat.completions.create(
             model=gpt_model,
             messages=[
