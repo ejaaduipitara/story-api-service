@@ -84,11 +84,11 @@ def query_rstory_gpt3(index_id, query):
         search_index = Marqo(marqoClient, index_id, searchable_attributes=["text"])
         top_docs_to_fetch = get_config_value("database", "TOP_DOCS_TO_FETCH", "3")
         documents = search_index.similarity_search_with_score(query, k=20)
-        logger.info(f"Marqo documents : {str(documents)}")
+        logger.debug(f"Marqo documents : {str(documents)}")
         min_score = get_config_value("database", "DOCS_MIN_SCORE", "0.7")
         filtered_document = get_score_filtered_documents(documents, float(min_score))
         filtered_document = filtered_document[:int(top_docs_to_fetch)]
-        logger.debug(f"filtered documents : {str(filtered_document)}")
+        logger.info(f"Score filtered documents : {str(filtered_document)}")
         contexts = get_formatted_documents(filtered_document)
         if not documents or not contexts:
             return "I'm sorry, but I don't have enough information to provide a specific answer for your question. Please provide more information or context about what you are referring to.", None, 200
@@ -129,7 +129,7 @@ def get_score_filtered_documents(documents: List[Tuple[Document, Any]], min_scor
 
 def get_formatted_documents(documents: List[Tuple[Document, Any]]):
     sources = ""
-    for document, score in documents:
+    for document, _ in documents:
         sources += f"""
             > {document.page_content} \n > context_source: [filename# {document.metadata['file_name']},  page# {document.metadata['page_label']}]\n\n
             """
