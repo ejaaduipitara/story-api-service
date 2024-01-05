@@ -4,7 +4,7 @@ from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
 from telemetry_logger import TelemetryLogger
 from starlette.types import Message
-
+from logger import logger
 
 async def set_body(request: Request, body: bytes):
     async def receive() -> Message:
@@ -45,6 +45,7 @@ class TelemetryMiddleware(BaseHTTPMiddleware):
                 "url": request.url
             }
             event.update(request.headers)
+            logger.info({"label": "api_call", "event": event})
             if response.status_code == 200:
                 event = telemetryLogger.prepare_log_event(eventInput=event, message="success")
             else:
