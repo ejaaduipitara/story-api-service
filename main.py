@@ -1,7 +1,7 @@
 import os.path
 from enum import Enum
 
-from fastapi import FastAPI, HTTPException, status
+from fastapi import FastAPI, HTTPException, status, Header
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
@@ -168,7 +168,7 @@ async def query(request: QueryModel) -> ResponseForQuery:
     
 
 @app.post("/v1/query_rstory", tags=["Q&A over Document Store"], include_in_schema=True)
-async def query_rstory(request: QueryModel) -> ResponseForQuery:
+async def query_rstory(request: QueryModel, x_request_id: str = Header(None, alias="X-Request-ID")) -> ResponseForQuery:
     load_dotenv()
     index_id = get_config_value('marqo', 'index_name', None)
     language = 'or' if request.input.language.name == DropDownInputLanguage.ori.name else request.input.language.name
@@ -226,5 +226,5 @@ async def query_rstory(request: QueryModel) -> ResponseForQuery:
         raise HTTPException(status_code=status_code, detail=error_message)
 
     response = ResponseForQuery(output=OutputResponse(text=regional_answer, audio=audio_output_url, language=language, format=output_format.lower()))
-    logger.info(response)
+    logger.info({"x_request_id": x_request_id, "query": query_text, "text": text, "response":response})
     return response
