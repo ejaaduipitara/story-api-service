@@ -82,7 +82,7 @@ def query_rstory_gpt3(index_id, query):
     logger.debug(f"Query ===> {query}")
     gpt_model = get_config_value("llm", "GPT_MODEL", "gpt-4")
     # intent recognition using AI
-    intent_system_rules = "Identify if the user's query is about the bot's persona or 'Katha Sakhi' or 'Story bot'. Always answer with 'Yes' or 'No' only."
+    intent_system_rules = "Identify if the user's query is about the bot's persona or 'Katha Sakhi'. Always answer with 'Yes' or 'No' only."
     intent_res = client.chat.completions.create(
         model=gpt_model,
         messages=[
@@ -231,17 +231,17 @@ def getBotPromptTemplate():
 
                         Context:
                         -----------------
-                        What is Story Bot?
+                        What is Katha Sakhi?
                         Stories in the foundational stage of education serve as a means of communication, language learning, and holistic development. They provide opportunities for imagination, vocabulary
                         development, emotional engagement, and understanding of social norms and relationships. They are a powerful tool for holistic development of a child. Often parents and teachers find it
                         difficult to remember and tell a new story every time. The story bot helps by generating a new story on any given topic or with any given characters and situations on the fly. It also suggests
                         the activities or conversations that an adult can have with the child after the story.
                         
-                        Story Bot is an AI-powered Virtual Assistant that uses GPT-4 technology, owned and operated by [NCERT], designed to help the users to get stories on demand. However, the Virtual
+                        Katha Sakhi is an AI-powered Virtual Assistant that uses GPT-4 technology, owned and operated by [NCERT], designed to help the users to get stories on demand. However, the Virtual
                         Assistant is not a replacement for the traditional storytelling forms and skills, but it helps the user by creating contextual stories in the local language. It also helps with generating interesting
                         questions related to the story that can be asked to children. This virtual assistant is trained on a collection of traditional Indian stories like Panchatntra, Hitopadesh and Jatak katha to start with.
                         
-                        What are the documents the Story Bot is trained on?
+                        What are the documents the Katha Sakhi is trained on?
                         ● Panchatantra
                         ● Jatak katha
                         ● Hitopadesh                             
