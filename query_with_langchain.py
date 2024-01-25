@@ -81,18 +81,24 @@ def query_rstory_gpt3(index_id, query):
     load_dotenv()
     logger.debug(f"Query ===> {query}")
     gpt_model = get_config_value("llm", "GPT_MODEL", "gpt-4")
-    # intent recognition using AI
-    intent_system_rules = "Identify if the user's query is about the bot's persona or 'Katha Sakhi'. Always answer with 'Yes' or 'No' only."
-    intent_res = client.chat.completions.create(
-        model=gpt_model,
-        messages=[
-            {"role": "system", "content": intent_system_rules},
-            {"role": "user", "content": query}
-        ],
-    )
-    intent_message = intent_res.choices[0].message.model_dump()
-    intent_response = intent_message["content"]
-    logger.info({"label": "openai_intent_response", "intent_response": intent_response})
+
+    intent_response = "No"
+    enable_bot_intent = get_config_value("llm", "ENABLE_BOT_INTENT", "False")
+
+    if enable_bot_intent.lower() == "true":
+        # intent recognition using AI
+        intent_system_rules = "Identify if the user's query is about the bot's persona or 'Katha Sakhi'. If yes, return the answer as 'Yes' else return answer as 'No' only."
+        intent_res = client.chat.completions.create(
+            model=gpt_model,
+            messages=[
+                {"role": "system", "content": intent_system_rules},
+                {"role": "user", "content": query}
+            ],
+        )
+        intent_message = intent_res.choices[0].message.model_dump()
+        intent_response = intent_message["content"]
+        logger.info({"label": "openai_intent_response", "intent_response": intent_response})
+
     if intent_response.lower() == "yes":
         system_rules = getBotPromptTemplate()
         logger.debug("==== System Rules ====")
