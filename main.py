@@ -20,7 +20,7 @@ app = FastAPI(title="Story API Service",
               version="1.0.0",
               terms_of_service="http://example.com/terms/",
               contact={
-                 
+
               },
               license_info={
                   "name": "MIT License",
@@ -35,55 +35,47 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-class DropdownOutputFormat(str, Enum):
-    TEXT = "text"
-    AUDIO = "audio"
-
-class DropDownInputLanguage(str, Enum):
-    en = "en"
-    bn = "bn"
-    gu = "gu"
-    hi = "hi"
-    kn = "kn"
-    ml = "ml"
-    mr = "mr"
-    ori = "or"
-    pa = "pa"
-    ta = "ta"
-    te = "te"
 
 class OutputResponse(BaseModel):
     text: str
     audio: str = None
-    language: DropDownInputLanguage
-    format: DropdownOutputFormat
+    language: str = None
+    format: str = None
+
 
 class ResponseForQuery(BaseModel):
     output: OutputResponse
-    
+
+
 class HealthCheck(BaseModel):
     """Response model to validate and return when performing a health check."""
 
     status: str = "OK"
 
+
 class QueryInputModel(BaseModel):
-    language: DropDownInputLanguage
-    text:str = None
-    audio:str = None
+    language: str = None
+    text: str = None
+    audio: str = None
+
 
 class QueryOuputModel(BaseModel):
-    format: DropdownOutputFormat
+    format: str = None
+
 
 class QueryModel(BaseModel):
     input: QueryInputModel
     output: QueryOuputModel
 
+
 # Telemetry API logs middleware
 app.add_middleware(TelemetryMiddleware)
+
 
 @app.get("/")
 async def root():
     return {"message": "Welcome to Story API Service"}
+
 
 @app.get(
     "/health",
@@ -106,11 +98,28 @@ def get_health() -> HealthCheck:
     """
     return HealthCheck(status="OK")
 
+
 @app.post("/v1/query", tags=["Q&A over Document Store"])
 async def query(request: QueryModel) -> ResponseForQuery:
     load_dotenv()
-    language = 'or' if request.input.language.name == DropDownInputLanguage.ori.name else request.input.language.name
-    output_format = request.output.format.name
+
+    language_code_list = get_config_value('request', 'supported_lang_codes', None).split(",")
+    if language_code_list is None:
+        raise HTTPException(status_code=422, detail="supported_lang_codes not configured!")
+
+    language = request.input.language.strip().lower()
+    if language is None or language == "" or language not in language_code_list:
+        raise HTTPException(status_code=422, detail="Unsupported language code entered!")
+
+    output_format_list = get_config_value('request', 'support_response_format', None).split(",")
+    if output_format_list is None:
+        raise HTTPException(status_code=422, detail="support_response_format not configured!")
+
+    output_format = request.output.format.strip().lower()
+
+    if output_format is None or output_format == "" or output_format not in output_format_list:
+        raise HTTPException(status_code=422, detail="Invalid output format!")
+
     audio_url = request.input.audio
     query_text = request.input.text
     is_audio = False
@@ -119,62 +128,83 @@ async def query(request: QueryModel) -> ResponseForQuery:
     answer = None
     audio_output_url = None
     source_text = None
-    logger.info({"label": "query", "query_text":query_text,"input_language": language, "output_format": output_format, "audio_url": audio_url})
-    if query_text is None and audio_url is None:
-        query_text = None
-        error_message = "Either 'Query text' or 'audio' should be present"
-        status_code = 422
-    else:
-        if query_text is not None:
-            text, error_message = process_incoming_text(query_text, language)
-            if output_format == "AUDIO":
-                is_audio = True
-        else:
-            if not is_url(audio_url) and not is_base64(audio_url):
-                logger.error({"query":query_text, "input_language": language, "output_format": output_format, "audio_url": audio_url, "status_code": status.HTTP_422_UNPROCESSABLE_ENTITY, "error_message": "Invalid audio input!"})
-                raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Invalid audio input!")
-            query_text, text, error_message = process_incoming_voice(audio_url, language)
-            is_audio = True
+    logger.info({"label": "query", "query_text": query_text, "input_language": language, "output_format": output_format, "audio_url": audio_url})
 
-        if text is not None:
-            answer, source_text, paraphrased_query, error_message, status_code = querying_with_langchain_gpt4(text)
-            if answer is not None:
-                regional_answer, error_message = process_outgoing_text(answer, language)
-                if regional_answer is not None:
-                    if is_audio:
-                        output_file, error_message = process_outgoing_voice(regional_answer, language)
-                        if output_file is not None:
-                            upload_file_object(output_file.name)
-                            audio_output_url, error_message = give_public_url(output_file.name)
-                            logger.debug(f"Audio Ouput URL ===> {audio_output_url}")
-                            output_file.close()
-                            os.remove(output_file.name)
-                        else:
-                            status_code = 503
+    if query_text is None and audio_url is None:
+        raise HTTPException(status_code=422, detail="Either 'text' or 'audio' should be present!")
+    elif (query_text is None or query_text == "") and (audio_url is None or audio_url == ""):
+        raise HTTPException(status_code=422, detail="Either 'text' or 'audio' should be present!")
+    elif query_text is not None and audio_url is not None and query_text != "" and audio_url != "":
+        raise HTTPException(status_code=422, detail="Both 'text' and 'audio' cannot be taken as input! Either 'text' "
+                                                    "or 'audio' is allowed.")
+
+    if query_text is not None:
+        text, error_message = process_incoming_text(query_text, language)
+        if output_format == "audio":
+            is_audio = True
+    else:
+        if not is_url(audio_url) and not is_base64(audio_url):
+            logger.error({"query": query_text, "input_language": language, "output_format": output_format, "audio_url": audio_url, "status_code": status.HTTP_422_UNPROCESSABLE_ENTITY, "error_message": "Invalid audio input!"})
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Invalid audio input!")
+        query_text, text, error_message = process_incoming_voice(audio_url, language)
+        is_audio = True
+
+    if text is not None:
+        answer, source_text, paraphrased_query, error_message, status_code = querying_with_langchain_gpt4(text)
+        if answer is not None:
+            regional_answer, error_message = process_outgoing_text(answer, language)
+            if regional_answer is not None:
+                if is_audio:
+                    output_file, error_message = process_outgoing_voice(regional_answer, language)
+                    if output_file is not None:
+                        upload_file_object(output_file.name)
+                        audio_output_url, error_message = give_public_url(output_file.name)
+                        logger.debug(f"Audio Ouput URL ===> {audio_output_url}")
+                        output_file.close()
+                        os.remove(output_file.name)
                     else:
-                        audio_output_url = None
+                        status_code = 503
                 else:
-                    status_code = 503
-        else:
-            status_code = 503
+                    audio_output_url = None
+            else:
+                status_code = 503
+    else:
+        status_code = 503
 
     if status_code != 200:
-        logger.error({"query":query_text, "input_language": language, "output_format": output_format, "audio_url": audio_url, "status_code": status_code, "error_message": error_message})
+        logger.error({"query": query_text, "input_language": language, "output_format": output_format, "audio_url": audio_url, "status_code": status_code, "error_message": error_message})
         raise HTTPException(status_code=status_code, detail=error_message)
 
     response = ResponseForQuery(output=OutputResponse(text=regional_answer, audio=audio_output_url, language=language, format=output_format.lower()))
     logger.info(response)
     return response
-    
+
 
 @app.post("/v1/query_rstory", tags=["Q&A over Document Store"], include_in_schema=True)
 async def query_rstory(request: QueryModel, x_request_id: str = Header(None, alias="X-Request-ID")) -> ResponseForQuery:
     load_dotenv()
-    index_id = get_config_value('marqo', 'index_name', None)
-    language = 'or' if request.input.language.name == DropDownInputLanguage.ori.name else request.input.language.name
-    output_format = request.output.format.name
+    index_id = get_config_value('database', 'index_name', None)
+
+    language_code_list = get_config_value('request', 'supported_lang_codes', None).split(",")
+    if language_code_list is None:
+        raise HTTPException(status_code=422, detail="supported_lang_codes not configured!")
+
+    language = request.input.language.strip().lower()
+    if language is None or language == "" or language not in language_code_list:
+        raise HTTPException(status_code=422, detail="Unsupported language code entered!")
+
+    output_format_list = get_config_value('request', 'support_response_format', None).split(",")
+    if output_format_list is None:
+        raise HTTPException(status_code=422, detail="support_response_format not configured!")
+
+    output_format = request.output.format.strip().lower()
+
+    if output_format is None or output_format == "" or output_format not in output_format_list:
+        raise HTTPException(status_code=422, detail="Invalid output format!")
+
     audio_url = request.input.audio
     query_text = request.input.text
+
     is_audio = False
     text = None
     regional_answer = None
@@ -183,48 +213,51 @@ async def query_rstory(request: QueryModel, x_request_id: str = Header(None, ali
     logger.info({"label": "query", "query_text": query_text, "index_id": index_id, "input_language": language, "output_format": output_format, "audio_url": audio_url})
 
     if query_text is None and audio_url is None:
-        query_text = None
-        error_message = "Either 'Query Text' or 'Audio URL' should be present"
-        status_code = 422
-    else:
-        if query_text is not None:
-            text, error_message = process_incoming_text(query_text, language)
-            if output_format == "AUDIO":
-                is_audio = True
-        else:
-            if not is_url(audio_url) and not is_base64(audio_url):
-                logger.error(
-                    {"index_id": index_id, "query": query_text, "input_language": language, "output_format": output_format, "audio_url": audio_url, "status_code": status.HTTP_422_UNPROCESSABLE_ENTITY, "error_message": "Invalid audio input!"})
-                raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Invalid audio input!")
-            query_text, text, error_message = process_incoming_voice(audio_url, language)
-            is_audio = True
+        raise HTTPException(status_code=422, detail="Either 'text' or 'audio' should be present!")
+    elif (query_text is None or query_text == "") and (audio_url is None or audio_url == ""):
+        raise HTTPException(status_code=422, detail="Either 'text' or 'audio' should be present!")
+    elif query_text is not None and audio_url is not None and query_text != "" and audio_url != "":
+        raise HTTPException(status_code=422, detail="Both 'text' and 'audio' cannot be taken as input! Either 'text' "
+                                                    "or 'audio' is allowed.")
 
-        if text is not None:
-            answer, error_message, status_code = query_rstory_gpt3(index_id, text)
-            if len(answer) != 0:
-                regional_answer, error_message = process_outgoing_text(answer, language)
-                if regional_answer is not None:
-                    if is_audio:
-                        output_file, error_message = process_outgoing_voice(regional_answer, language)
-                        if output_file is not None:
-                            upload_file_object(output_file.name)
-                            audio_output_url, error_message = give_public_url(output_file.name)
-                            logger.info(f"Audio Ouput URL ===> {audio_output_url}")
-                            output_file.close()
-                            os.remove(output_file.name)
-                        else:
-                            status_code = 503
+    if query_text is not None:
+        text, error_message = process_incoming_text(query_text, language)
+        if output_format == "audio":
+            is_audio = True
+    else:
+        if not is_url(audio_url) and not is_base64(audio_url):
+            logger.error(
+                {"index_id": index_id, "query": query_text, "input_language": language, "output_format": output_format, "audio_url": audio_url, "status_code": status.HTTP_422_UNPROCESSABLE_ENTITY, "error_message": "Invalid audio input!"})
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Invalid audio input!")
+        query_text, text, error_message = process_incoming_voice(audio_url, language)
+        is_audio = True
+
+    if text is not None:
+        answer, error_message, status_code = query_rstory_gpt3(index_id, text)
+        if len(answer) != 0:
+            regional_answer, error_message = process_outgoing_text(answer, language)
+            if regional_answer is not None:
+                if is_audio:
+                    output_file, error_message = process_outgoing_voice(regional_answer, language)
+                    if output_file is not None:
+                        upload_file_object(output_file.name)
+                        audio_output_url, error_message = give_public_url(output_file.name)
+                        logger.info(f"Audio Ouput URL ===> {audio_output_url}")
+                        output_file.close()
+                        os.remove(output_file.name)
                     else:
-                        audio_output_url = ""
+                        status_code = 503
                 else:
-                    status_code = 503
-        else:
-            status_code = 503
+                    audio_output_url = ""
+            else:
+                status_code = 503
+    else:
+        status_code = 503
 
     if status_code != 200:
         logger.error({"index_id": index_id, "query": query_text, "input_language": language, "output_format": output_format, "audio_url": audio_url, "status_code": status_code, "error_message": error_message})
         raise HTTPException(status_code=status_code, detail=error_message)
 
     response = ResponseForQuery(output=OutputResponse(text=regional_answer, audio=audio_output_url, language=language, format=output_format.lower()))
-    logger.info({"x_request_id": x_request_id, "query": query_text, "text": text, "response":response})
+    logger.info({"x_request_id": x_request_id, "query": query_text, "text": text, "response": response})
     return response
