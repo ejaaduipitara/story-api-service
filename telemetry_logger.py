@@ -1,21 +1,27 @@
-import json
-from fastapi import Request
-import requests
 import time
-import os
 import uuid
+
+import requests
+
+from config_util import get_config_value
 from logger import logger
 
-telemetryURL = os.environ.get("TELEMETRY_ENDPOINT_URL", "")
-ENV_NAME = os.environ.get("SERVICE_ENVIRONMENT","dev")
-TELEMETRY_LOG_ENABLED = os.environ.get("TELEMETRY_LOG_ENABLED", "true").lower() == "true"
+telemetryURL = get_config_value('telemetry', 'TELEMETRY_ENDPOINT_URL', None)
+ENV_NAME = get_config_value('telemetry', 'environment', None)
+TELEMETRY_LOG_ENABLED = get_config_value('telemetry', 'telemetry_log_enabled', "true").lower() == "true"
+telemetry_id = get_config_value('telemetry', 'service_id', None)
+telemetry_ver = get_config_value('telemetry', 'service_ver', None)
+actor_id = get_config_value('telemetry', 'actor_id', None)
+channel = get_config_value('telemetry', 'channel', None)
+pdata_id = get_config_value('telemetry', 'pdata_id', None)
+events_threshold = get_config_value('telemetry', 'events_threshold', None)
 
 class TelemetryLogger:
     """
     A class to capture and send telemetry logs using the requests library with threshold limit.
     """
 
-    def __init__(self, url=telemetryURL, threshold=5):
+    def __init__(self, url=telemetryURL, threshold=int(events_threshold)):
         self.url = url
         self.events = []  # Store multiple events before exceeding threshold
         self.threshold = threshold
@@ -26,13 +32,13 @@ class TelemetryLogger:
 
         **kwargs:** Keyword arguments containing the event data.
         """
-        
+
         logger.info(f"Telemetry event: {event}")
-        
+
         if not TELEMETRY_LOG_ENABLED:
             return
-        
-        self.events.append(event)   
+
+        self.events.append(event)
         # Send logs if exceeding threshold
         if len(self.events) >= self.threshold:
             self.send_logs()
@@ -43,11 +49,11 @@ class TelemetryLogger:
         """
         try:
             data = {
-                    "id": "api.djp.telemetry",
-                    "ver": "3.1",
-                    "params": {"msgid": str(uuid.uuid4())},
-                    "ets": int(time.time() * 1000),
-                    "events": self.events
+                "id": telemetry_id,
+                "ver": telemetry_ver,
+                "params": {"msgid": str(uuid.uuid4())},
+                "ets": int(time.time() * 1000),
+                "events": self.events
             }
             headers = {"Content-Type": "application/json"}
             response = requests.post(self.url + "/v1/telemetry", json=data, headers=headers)
@@ -57,11 +63,11 @@ class TelemetryLogger:
             # Reset captured events after sending
             self.events = []
         except requests.exceptions.RequestException as e:
-            logger.error(f"Error sending telemetry log: {e}", exc_info=True)    
+            logger.error(f"Error sending telemetry log: {e}", exc_info=True)
 
     def prepare_log_event(self, eventInput: dict, etype="api_access", elevel="INFO", message=""):
         """
-        Prepare a telemetry event dictionary with the specified values. 
+        Prepare a telemetry event dictionary with the specified values.
         Args:
             eventInput: Event Input.
             etype: Event type (default: "api_access").
@@ -74,16 +80,16 @@ class TelemetryLogger:
         data = {
             "eid": "LOG",
             "ets": int(time.time() * 1000),  # Current timestamp
-            "ver": "3.1",  # Version
+            "ver": telemetry_ver,  # Version
             "mid": f"LOG:{round(time.time())}",  # Unique message ID
             "actor": {
-                "id": "story-api-service",
+                "id": actor_id,
                 "type": "System",
             },
             "context": {
-                "channel": "ejp",
-                 "pdata": {
-                    "id": "ejp.story.api.service",
+                "channel": channel,
+                "pdata": {
+                    "id": pdata_id,
                     "ver": "1.0",
                     "pid": ""
                 },
@@ -134,16 +140,20 @@ class TelemetryLogger:
             {"duration": int(eventInput.get("duration"))}
         ]
         flattened_dict = self.__flatten_dict(eventInput.get("body", {}))
-        for item in flattened_dict.items():
-            eventEDataParams.append({item[0]: item[1]})
+        if bool(flattened_dict):
+            for item in flattened_dict.items():
+                eventEDataParams.append({item[0]: item[1]})
+
         return eventEDataParams
 
     def __flatten_dict(self, d, parent_key='', sep='_'):
         flattened = {}
-        for k, v in d.items():
-            new_key = f"{parent_key}{sep}{k}" if parent_key else k
-            if isinstance(v, dict):
-                flattened.update(self.__flatten_dict(v, new_key, sep=sep))
-            else:
-                flattened[new_key] = v
+        if bool(d):
+            for k, v in d.items():
+                new_key = f"{parent_key}{sep}{k}" if parent_key else k
+                if isinstance(v, dict):
+                    flattened.update(self.__flatten_dict(v, new_key, sep=sep))
+                else:
+                    flattened[new_key] = v
+
         return flattened
