@@ -4,6 +4,7 @@ from typing import (
     List,
     Tuple
 )
+import openai
 from openai import AzureOpenAI, RateLimitError, APIError, InternalServerError
 # from openai.types import ModerationCreateResponse
 import marqo
@@ -14,11 +15,17 @@ from logger import logger
 from config_util import get_config_value
 
 load_dotenv()
-client = AzureOpenAI(
-            azure_endpoint=os.environ["OPENAI_API_BASE"],
-            api_key=os.environ["OPENAI_API_KEY"],
-            api_version=os.environ["OPENAI_API_VERSION"]
-        )
+llm_type = get_config_value("llm", "llm_type", None).lower()
+
+if llm_type == "azure":
+    client = AzureOpenAI(
+        azure_endpoint=os.environ["OPENAI_API_BASE"],
+        api_key=os.environ["OPENAI_API_KEY"],
+        api_version=os.environ["OPENAI_API_VERSION"]
+    )
+elif llm_type == "openai":
+    client = openai.OpenAI(api_key=os.environ["OPENAI_API_KEY"])
+
 marqo_url = get_config_value("database", "MARQO_URL", None)
 marqoClient = marqo.Client(url=marqo_url)
 
