@@ -40,16 +40,13 @@ Unleash your creativity with "Story Sakhi" and experience the joy of storytellin
 1. To get the Marqo image, use the following command:
 
 ```shell
-docker pull marqoai/marqo:latest
+docker pull marqoai/marqo:1.5.1
 ```
 
 2. To create the Marqo instance, run the following command:
 
 ```shell
-docker run --name marqo --privileged \
-  -p 8882:8882 \
-  --add-host host.docker.internal:host-gateway \
-  -d marqoai/marqo:latest
+docker rm -f marqo;docker run --name marqo -it --privileged -p 8882:8882 --add-host host.docker.internal:host-gateway -e "MARQO_MAX_INDEX_FIELDS=400" -e "MARQO_MAX_DOC_BYTES=200000" -e "MARQO_MAX_RETRIEVABLE_DOCS=600" -e "MARQO_MAX_NUMBER_OF_REPLICAS=2" -e "MARQO_MODELS_TO_PRELOAD=[\"flax-sentence-embeddings/all_datasets_v4_mpnet-base\"]" marqoai/marqo:1.5.1
 ```
 
 # 🔧 1. Installation
