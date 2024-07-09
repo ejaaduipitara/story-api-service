@@ -21,6 +21,8 @@ node() {
             build_tag = sh(script: "echo " + params.github_release_tag.split('/')[-1] + "_" + commit_hash + "_" + env.BUILD_NUMBER, returnStdout: true).trim()
             echo "build_tag: " + build_tag
 
+            sh 'chmod +x ./build.sh'
+            
             stage('Build'){
                 sh("./build.sh ${build_tag} ${env.NODE_NAME} ${hub_org}")
             }
