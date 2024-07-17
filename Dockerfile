@@ -19,7 +19,7 @@ ENV PATH=$PATH:/root/.cargo/bin \
     TELEMETRY_LOG_ENABLED=$TELEMETRY_LOG_ENABLED
 RUN apt-get update && apt install build-essential --fix-missing -y
 RUN wget --no-check-certificate https://dl.xpdfreader.com/xpdf-tools-linux-4.05.tar.gz &&  \
-    tar -xvf xpdf-tools-linux-4.05.tar.gz && cp xpdf-tools-linux-4.04/bin64/pdftotext /usr/local/bin
+    tar -xvf xpdf-tools-linux-4.05.tar.gz && cp xpdf-tools-linux-4.05/bin64/pdftotext /usr/local/bin
 RUN apt-get install ffmpeg -y
 COPY requirements-prod.txt /root/
 RUN pip3 install -r requirements-prod.txt
