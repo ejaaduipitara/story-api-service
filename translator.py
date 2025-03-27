@@ -12,6 +12,7 @@ from utils import *
 telemetryLogger = TelemetryLogger()
 
 asr_mapping = {
+    "as": "ai4bharat/conformer-multilingual-indo_aryan-gpu--t4"
     "bn": "ai4bharat/conformer-multilingual-indo_aryan-gpu--t4",
     "en": "ai4bharat/whisper-medium-en--gpu--t4",
     "gu": "ai4bharat/conformer-multilingual-indo_aryan-gpu--t4",
