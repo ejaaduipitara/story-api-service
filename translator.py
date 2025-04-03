@@ -31,6 +31,7 @@ asr_mapping = {
 translation_serviceId = "ai4bharat/indictrans-v2-all-gpu--t4"
 
 tts_mapping = {
+    "hi": "ai4bharat/indic-tts-coqui-indo_aryan-gpu--t4",
     "as": "ai4bharat/indic-tts-coqui-indo_aryan-gpu--t4",
     "bn": "ai4bharat/indic-tts-coqui-indo_aryan-gpu--t4",
     "brx": "ai4bharat/indic-tts-coqui-misc-gpu--t4",
