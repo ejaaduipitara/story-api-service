@@ -31,6 +31,8 @@ RUN git clone https://github.com/AI4Bharat/NeMo.git && \
 
 COPY requirements-prod.txt /root/
 RUN pip3 install -r requirements-prod.txt
+RUN pip install git+https://github.com/huggingface/parler-tts.git
+
 COPY main.py cloud_storage_oci.py query_with_langchain.py io_processing.py translator.py logger.py script.sh utils.py telemetry_logger.py telemetry_middleware.py config.ini config_util.py /root/
 EXPOSE 8000
 ENTRYPOINT ["bash","script.sh"]
